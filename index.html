@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Black Belt — Fluxo diário</title>
+<style>
+  :root{
+    --bg: #10131a;
+    --panel: #171b25;
+    --panel-2: #1d2230;
+    --border: #2a3040;
+    --text: #edeef2;
+    --text-2: #9aa1b2;
+    --text-3: #6b7180;
+    --reuniao: #f2a93b;
+    --revisao: #4fd1c5;
+    --execucao: #ff7a5c;
+    --pausa: #6b7280;
+    --mono: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Consolas, monospace;
+    --sans: -apple-system, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;
+    padding:40px 20px 80px;
+  }
+  .wrap{max-width:920px;margin:0 auto}
+  a{color:inherit}
+
+  header{margin-bottom:28px}
+  .brand{
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:0.24em;
+    color:var(--text-3);
+    margin-bottom:10px;
+  }
+  h1{
+    font-size:32px;
+    font-weight:600;
+    letter-spacing:-0.01em;
+    margin:0 0 8px;
+  }
+  .sub{
+    color:var(--text-2);
+    font-size:14px;
+    margin:0 0 14px;
+    max-width:520px;
+    line-height:1.5;
+  }
+  .date{
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--text-3);
+    text-transform:capitalize;
+    border-top:1px solid var(--border);
+    padding-top:14px;
+  }
+
+  .legend{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-bottom:24px;
+  }
+  .tag{
+    font-family:var(--mono);
+    font-size:11px;
+    padding:5px 10px;
+    border-radius:999px;
+    border:1px solid var(--border);
+    color:var(--text-2);
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .tag::before{
+    content:"";
+    width:7px;height:7px;border-radius:50%;
+    display:inline-block;
+  }
+  .tag.reuniao::before{background:var(--reuniao)}
+  .tag.revisao::before{background:var(--revisao)}
+  .tag.execucao::before{background:var(--execucao)}
+  .tag.pausa::before{background:var(--pausa)}
+
+  .board{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(340px, 1fr));
+    gap:20px;
+  }
+  .col{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:22px;
+  }
+  .col-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:16px;
+    gap:12px;
+  }
+  .col-head h2{
+    font-size:16px;
+    font-weight:600;
+    margin:0;
+  }
+  .reset-btn{
+    background:transparent;
+    border:1px solid var(--border);
+    color:var(--text-2);
+    font-size:11px;
+    font-family:var(--mono);
+    padding:6px 10px;
+    border-radius:8px;
+    cursor:pointer;
+    transition:border-color .15s, color .15s;
+  }
+  .reset-btn:hover{border-color:var(--text-3); color:var(--text)}
+  .reset-btn:focus-visible{outline:2px solid var(--revisao); outline-offset:2px}
+
+  .progress-rail{
+    height:6px;
+    background:var(--panel-2);
+    border-radius:999px;
+    overflow:hidden;
+    margin-bottom:8px;
+  }
+  .progress-fill{
+    height:100%;
+    width:0%;
+    background:var(--revisao);
+    border-radius:999px;
+    transition:width .35s ease;
+  }
+  .progress-label{
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--text-3);
+    margin-bottom:18px;
+  }
+
+  .checklist{
+    list-style:none;
+    margin:0;
+    padding:0;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .item{
+    display:flex;
+    gap:12px;
+    padding:12px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    background:var(--panel-2);
+    border-left-width:3px;
+    border-left-style:solid;
+    transition:opacity .15s;
+  }
+  .item.reuniao{border-left-color:var(--reuniao)}
+  .item.revisao{border-left-color:var(--revisao)}
+  .item.execucao{border-left-color:var(--execucao)}
+  .item.pausa{border-left-color:var(--pausa)}
+  .item.done{opacity:.5}
+
+  .checkbox{
+    flex:0 0 auto;
+    width:20px;height:20px;
+    margin-top:2px;
+    border-radius:5px;
+    border:1.5px solid var(--text-3);
+    background:transparent;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:0;
+  }
+  .checkbox:focus-visible{outline:2px solid var(--revisao); outline-offset:2px}
+  .checkbox svg{width:12px;height:12px;opacity:0;transition:opacity .15s}
+  .item.done .checkbox{background:var(--revisao); border-color:var(--revisao)}
+  .item.done .checkbox svg{opacity:1}
+  .item.done .checkbox svg path{stroke:var(--bg)}
+
+  .item-body{flex:1; min-width:0}
+  .item-time{
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--text-3);
+    margin-bottom:3px;
+  }
+  .item-title{
+    font-size:14px;
+    font-weight:600;
+    margin-bottom:3px;
+  }
+  .item.done .item-title{text-decoration:line-through; text-decoration-color:var(--text-3)}
+  .item-desc{
+    font-size:12.5px;
+    color:var(--text-2);
+    line-height:1.5;
+  }
+
+  footer{
+    margin-top:28px;
+    font-size:12px;
+    color:var(--text-3);
+    border-top:1px solid var(--border);
+    padding-top:16px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">BLACK BELT</div>
+    <h1>Fluxo diário</h1>
+    <p class="sub">Painel operacional para acompanhar, lado a lado, a rotina do gestor de tráfego e do atendimento CS ao longo do dia.</p>
+    <div class="date" id="todayDate"></div>
+  </header>
+
+  <div class="legend">
+    <span class="tag reuniao">Reunião / alinhamento</span>
+    <span class="tag revisao">Revisão / checagem</span>
+    <span class="tag execucao">Execução / atendimento</span>
+    <span class="tag pausa">Pausa</span>
+  </div>
+
+  <div class="board">
+    <section class="col">
+      <div class="col-head">
+        <h2>Gestor de tráfego</h2>
+        <button class="reset-btn" data-role="gestor" type="button">Reiniciar dia</button>
+      </div>
+      <div class="progress-rail"><div class="progress-fill" id="fill-gestor"></div></div>
+      <div class="progress-label" id="label-gestor">carregando…</div>
+      <ol class="checklist" id="list-gestor"></ol>
+    </section>
+
+    <section class="col">
+      <div class="col-head">
+        <h2>Atendimento CS</h2>
+        <button class="reset-btn" data-role="cs" type="button">Reiniciar dia</button>
+      </div>
+      <div class="progress-rail"><div class="progress-fill" id="fill-cs"></div></div>
+      <div class="progress-label" id="label-cs">carregando…</div>
+      <ol class="checklist" id="list-cs"></ol>
+    </section>
+  </div>
+
+  <footer>
+    <p>O checklist reinicia sozinho a cada novo dia. O progresso marcado fica salvo mesmo se você fechar a página.</p>
+  </footer>
+
+</div>
+
+<script>
+const ITEMS = {
+  gestor: [
+    {id:'g1', time:'08:00–09:00', cat:'reuniao', title:'Daily + saudações', desc:'Entra na salinha virtual e envia as saudações no sistema interno, para o CS iniciar as conversas.'},
+    {id:'g2', time:'09:01–10:00', cat:'revisao', title:'Revisão dos grupos', desc:'Checa as últimas mensagens para garantir que nenhuma demanda ficou parada.'},
+    {id:'g3', time:'10:01–12:00', cat:'execucao', title:'Otimizações e criativos', desc:'Início das otimizações e ativação de novos criativos enviados no grupo. Demandas sempre em primeiro lugar.'},
+    {id:'g4', time:'12:00–14:00', cat:'pausa', title:'Pausa para o almoço', desc:''},
+    {id:'g5', time:'14:01', cat:'reuniao', title:'Alinhamento pós-pausa', desc:'Entra na salinha virtual para retomar o ritmo.'},
+    {id:'g6', time:'14:30–17:30', cat:'execucao', title:'Otimizações e demandas', desc:'Continua as otimizações e segue atendendo as demandas que chegam.'},
+    {id:'g7', time:'17:30', cat:'revisao', title:'Revisão final', desc:'Revisa contas e grupos para garantir que nada passou batido.'}
+  ],
+  cs: [
+    {id:'c1', time:'08:00', cat:'reuniao', title:'Daily', desc:'Entra na salinha virtual para a daily.'},
+    {id:'c2', time:'08:00–08:30', cat:'revisao', title:'Revisão dos grupos', desc:'Verifica se algum cliente ficou sem atendimento no dia anterior.'},
+    {id:'c3', time:'08:30–09:30', cat:'execucao', title:'Início dos contatos', desc:'Inicia os contatos com clientes a partir das saudações dos gestores no sistema interno.'},
+    {id:'c4', time:'09:31–10:30', cat:'execucao', title:'Respostas pós-saudação', desc:'Responde as mensagens que chegam após as saudações.'},
+    {id:'c5', time:'10:31–12:00', cat:'execucao', title:'Atendimento e apoio estratégico', desc:'Atende as demandas dos clientes e auxilia nas estratégias do time de tráfego.'},
+    {id:'c6', time:'12:00–14:00', cat:'pausa', title:'Pausa para o almoço', desc:''},
+    {id:'c7', time:'14:01', cat:'reuniao', title:'Alinhamento pós-pausa', desc:'Entra na salinha virtual para retomar o ritmo.'},
+    {id:'c8', time:'14:30–17:30', cat:'execucao', title:'Atendimento e apoio estratégico', desc:'Segue atendendo demandas e apoiando as estratégias com o time de tráfego.'},
+    {id:'c9', time:'17:30', cat:'revisao', title:'Revisão final', desc:'Revisa contas e grupos para garantir que nada passou batido.'}
+  ]
+};
+
+const CHECK_SVG = '<svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.2 12L13 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+function todayKey(){
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+const DATE_KEY = todayKey();
+
+function storageKey(role){ return 'checklist:' + role + ':' + DATE_KEY; }
+
+async function loadState(role){
+  try{
+    const res = await window.storage.get(storageKey(role));
+    return res ? JSON.parse(res.value) : {};
+  }catch(e){
+    return {};
+  }
+}
+
+async function saveState(role, state){
+  try{
+    await window.storage.set(storageKey(role), JSON.stringify(state));
+  }catch(e){
+    console.error('Erro ao salvar checklist', e);
+  }
+}
+
+function renderList(role){
+  const list = document.getElementById('list-' + role);
+  list.innerHTML = '';
+  ITEMS[role].forEach(item => {
+    const li = document.createElement('li');
+    li.className = 'item ' + item.cat;
+    li.dataset.id = item.id;
+    li.innerHTML =
+      '<button class="checkbox" type="button" aria-label="Marcar ' + item.title + ' como concluído">' + CHECK_SVG + '</button>' +
+      '<div class="item-body">' +
+        '<div class="item-time">' + item.time + '</div>' +
+        '<div class="item-title">' + item.title + '</div>' +
+        (item.desc ? '<div class="item-desc">' + item.desc + '</div>' : '') +
+      '</div>';
+    list.appendChild(li);
+  });
+}
+
+function updateProgress(role, state){
+  const total = ITEMS[role].length;
+  const done = ITEMS[role].filter(i => state[i.id]).length;
+  document.getElementById('fill-' + role).style.width = (total ? (done/total*100) : 0) + '%';
+  document.getElementById('label-' + role).textContent = done + ' de ' + total + ' concluídos';
+}
+
+function applyState(role, state){
+  const list = document.getElementById('list-' + role);
+  ITEMS[role].forEach(item => {
+    const li = list.querySelector('[data-id="' + item.id + '"]');
+    if(!li) return;
+    li.classList.toggle('done', !!state[item.id]);
+  });
+  updateProgress(role, state);
+}
+
+async function initRole(role){
+  renderList(role);
+  let state = await loadState(role);
+  applyState(role, state);
+
+  const list = document.getElementById('list-' + role);
+  list.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.checkbox');
+    if(!btn) return;
+    const li = btn.closest('.item');
+    const id = li.dataset.id;
+    state[id] = !state[id];
+    applyState(role, state);
+    await saveState(role, state);
+  });
+
+  document.querySelector('.reset-btn[data-role="' + role + '"]').addEventListener('click', async () => {
+    if(!confirm('Reiniciar o checklist de hoje para ' + (role === 'gestor' ? 'gestor de tráfego' : 'atendimento CS') + '?')) return;
+    state = {};
+    applyState(role, state);
+    await saveState(role, state);
+  });
+}
+
+document.getElementById('todayDate').textContent = new Intl.DateTimeFormat('pt-BR', {
+  weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+}).format(new Date());
+
+initRole('gestor');
+initRole('cs');
+</script>
+</body>
+</html>
